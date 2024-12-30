@@ -9,35 +9,76 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TodoList(),
+      home: TodoApp(),
     );
   }
 }
 
-class TodoList extends StatefulWidget {
+class TodoApp extends StatefulWidget {
   @override
-  State<TodoList> createState() => _TodoListState();
+  State<TodoApp> createState() => _TodoAppState();
 }
 
-class _TodoListState extends State<TodoList> {
-  List<Map<String, dynamic>> tasks = [];
+class _TodoAppState extends State<TodoApp> {
+  final List<Map<String, dynamic>> tasks = [];
 
-  void addTask(String task) {
+  void _addTask(String task) {
     setState(() {
       tasks.add({'title': task, 'isChecked': false});
     });
   }
 
-  void deleteTask(int index) {
+  void _deleteTask(int index) {
     setState(() {
       tasks.removeAt(index);
     });
   }
 
-  void toggleCheckbox(int index) {
+  void _toggleCheckbox(int index) {
     setState(() {
       tasks[index]['isChecked'] = !tasks[index]['isChecked'];
     });
+  }
+
+  void _showAddTaskModal(BuildContext context) {
+    String newTask = '';
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Add Task',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 30,
+                color: Colors.lightBlueAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextField(
+              autofocus: true,
+              textAlign: TextAlign.center,
+              onChanged: (value) => newTask = value,
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent),
+              onPressed: () {
+                if (newTask.isNotEmpty) {
+                  _addTask(newTask);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Add', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -45,173 +86,66 @@ class _TodoListState extends State<TodoList> {
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            builder: (context) => AddTaskScreen(
-              onAdd: (newTask) {
-                addTask(newTask);
-                Navigator.pop(context);
-              },
-            ),
-          );
-        },
-        child: Icon(
-          Icons.add,
-          color: Colors.white,
-        ),
+        onPressed: () => _showAddTaskModal(context),
+        child: const Icon(Icons.add, color: Colors.white),
         backgroundColor: Colors.lightBlueAccent,
       ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: EdgeInsets.only(top: 40, left: 30, bottom: 20),
+            Padding(
+              padding: const EdgeInsets.only(top: 40, left: 30, bottom: 20),
               child: Row(
-                children: [
+                children: const [
                   CircleAvatar(
                     backgroundColor: Colors.white,
                     radius: 30,
-                    child: Icon(
-                      Icons.list,
-                      size: 40,
-                      color: Colors.lightBlueAccent,
-                    ),
+                    child: Icon(Icons.list, size: 40, color: Colors.lightBlueAccent),
                   ),
                   SizedBox(width: 20),
                   Text(
                     'Todoey',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ],
               ),
             ),
             Expanded(
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
                 ),
-                child: TaskList(
-                  tasks: tasks,
-                  onDelete: deleteTask,
-                  onToggle: toggleCheckbox,
+                child: ListView.builder(
+                  itemCount: tasks.length,
+                  itemBuilder: (context, index) {
+                    final task = tasks[index];
+                    return ListTile(
+                      title: Text(
+                        task['title'],
+                        style: TextStyle(
+                          decoration: task['isChecked'] ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                      leading: Checkbox(
+                        value: task['isChecked'],
+                        onChanged: (_) => _toggleCheckbox(index),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _deleteTask(index),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class TaskList extends StatelessWidget {
-  final List<Map<String, dynamic>> tasks;
-  final Function(int) onDelete;
-  final Function(int) onToggle;
-
-  TaskList({required this.tasks, required this.onDelete, required this.onToggle});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
-        return TaskTile(
-          taskName: tasks[index]['title'],
-          isChecked: tasks[index]['isChecked'],
-          onDelete: () => onDelete(index),
-          onToggle: () => onToggle(index),
-        );
-      },
-    );
-  }
-}
-
-class TaskTile extends StatelessWidget {
-  final String taskName;
-  final bool isChecked;
-  final VoidCallback onDelete;
-  final VoidCallback onToggle;
-
-  TaskTile({required this.taskName, required this.isChecked, required this.onDelete, required this.onToggle});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        taskName,
-        style: TextStyle(
-          decoration: isChecked ? TextDecoration.lineThrough : null,
-        ),
-      ),
-      leading: Checkbox(
-        value: isChecked,
-        onChanged: (value) => onToggle(),
-      ),
-      trailing: IconButton(
-        icon: Icon(Icons.delete, color: Colors.red),
-        onPressed: onDelete,
-      ),
-    );
-  }
-}
-
-class AddTaskScreen extends StatelessWidget {
-  final Function(String) onAdd;
-
-  AddTaskScreen({required this.onAdd});
-
-  @override
-  Widget build(BuildContext context) {
-    String newTask = '';
-
-    return Container(
-      padding: EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Add Task',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 30,
-              color: Colors.lightBlueAccent,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          TextField(
-            autofocus: true,
-            textAlign: TextAlign.center,
-            onChanged: (value) {
-              newTask = value;
-            },
-          ),
-          SizedBox(height: 10),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.lightBlueAccent,
-            ),
-            onPressed: () {
-              if (newTask.isNotEmpty) {
-                onAdd(newTask);
-              }
-            },
-            child: Text(
-              'Add',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
       ),
     );
   }
