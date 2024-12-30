@@ -22,25 +22,26 @@ class TodoApp extends StatefulWidget {
 class _TodoAppState extends State<TodoApp> {
   final List<Map<String, dynamic>> tasks = [];
 
-  void _addTask(String task) {
+  void addTask(String task) {
     setState(() {
       tasks.add({'title': task, 'isChecked': false});
     });
   }
 
-  void _deleteTask(int index) {
+  void deleteTask(int index) {
     setState(() {
       tasks.removeAt(index);
     });
   }
 
-  void _toggleCheckbox(int index) {
+  void toggleCheckbox(int index) {
     setState(() {
+      print(index);
       tasks[index]['isChecked'] = !tasks[index]['isChecked'];
     });
   }
 
-  void _showAddTaskModal(BuildContext context) {
+  void showAddTaskModal(BuildContext context) {
     String newTask = '';
     showModalBottomSheet(
       context: context,
@@ -48,9 +49,8 @@ class _TodoAppState extends State<TodoApp> {
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Add Task',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -64,17 +64,19 @@ class _TodoAppState extends State<TodoApp> {
               textAlign: TextAlign.center,
               onChanged: (value) => newTask = value,
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent),
+            SizedBox(height: 10),
+            OutlinedButton(
               onPressed: () {
-                if (newTask.isNotEmpty) {
-                  _addTask(newTask);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text('Add', style: TextStyle(color: Colors.white)),
-            ),
+              if (newTask.isNotEmpty) {
+                addTask(newTask);
+                Navigator.pop(context);
+              }
+            },
+              child: Text(
+                'Add',
+                style: TextStyle(color: Colors.black),
+              ),
+            )
           ],
         ),
       ),
@@ -86,9 +88,9 @@ class _TodoAppState extends State<TodoApp> {
     return Scaffold(
       backgroundColor: Colors.lightBlueAccent,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskModal(context),
-        child: const Icon(Icons.add, color: Colors.white),
+        onPressed: () => showAddTaskModal(context),
         backgroundColor: Colors.lightBlueAccent,
+        child: Icon(Icons.add, color: Colors.white),
       ),
       body: SafeArea(
         child: Column(
@@ -133,11 +135,11 @@ class _TodoAppState extends State<TodoApp> {
                       ),
                       leading: Checkbox(
                         value: task['isChecked'],
-                        onChanged: (_) => _toggleCheckbox(index),
+                        onChanged: (e) => toggleCheckbox(index),
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteTask(index),
+                        onPressed: () => deleteTask(index),
                       ),
                     );
                   },
